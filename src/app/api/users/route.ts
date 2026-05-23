@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import type { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Create a new user if requested
     if (username) {
-      const newUser = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const newUser = await prisma.$transaction(async (tx: Awaited<ReturnType<typeof prisma['$transaction']>> extends any[] ? never : Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
         const created = await tx.user.create({
           data: {
             username,
