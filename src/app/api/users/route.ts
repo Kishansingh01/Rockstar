@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Create a new user if requested
     if (username) {
-      const newUser = await prisma.$transaction(async (tx) => {
+      const newUser = await prisma.$transaction(async (tx: typeof prisma) => {
         const created = await tx.user.create({
           data: {
             username,
