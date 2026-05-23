@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId and amount are required' }, { status: 400 });
     }
 
-    const updatedUser = await prisma.$transaction(async (tx) => {
+    const updatedUser = await prisma.$transaction(async (tx: Awaited<ReturnType<typeof prisma['$transaction']>> extends any[] ? never : Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       const u = await tx.user.update({
         where: { id: userId },
         data: {
