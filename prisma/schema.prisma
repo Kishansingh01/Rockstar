@@ -1,0 +1,77 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String                 @id @default(uuid())
+  username     String                 @unique
+  role         String                 @default("USER") // "USER" or "ADMIN"
+  coins        Float                  @default(1000.0) // Give users 1000 coins initially so they can play!
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  
+  participants SpinWheelParticipant[]
+  transactions CoinTransaction[]
+  wonWheels    SpinWheel[]            @relation("WheelWinner")
+}
+
+model SpinWheel {
+  id                     String                 @id @default(uuid())
+  status                 String                 @default("CREATED") // "CREATED", "ACTIVE", "SPINNING", "FINISHED", "ABORTED"
+  entryFee               Float                  @default(100.0)
+  
+  // Database-driven pool percentages at the time of creation
+  winnerPoolShare        Float                  @default(70.0) // X%
+  adminPoolShare         Float                  @default(20.0) // Y%
+  appPoolShare           Float                  @default(10.0) // Z%
+  
+  // Cumulative amounts
+  winnerPoolAccumulated  Float                  @default(0.0)
+  adminPoolAccumulated   Float                  @default(0.0)
+  appPoolAccumulated     Float                  @default(0.0)
+  
+  winnerId               String?
+  winner                 User?                  @relation("WheelWinner", fields: [winnerId], references: [id])
+                                                                      
+  createdAt              DateTime               @default(now())
+  startedAt              DateTime?
+  endedAt                DateTime?
+  
+  participants           SpinWheelParticipant[]
+  transactions           CoinTransaction[]
+}
+
+model SpinWheelParticipant {
+  id               String    @id @default(uuid())
+  spinWheelId      String
+  spinWheel        SpinWheel @relation(fields: [spinWheelId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt         DateTime  @default(now())
+  eliminatedAt     DateTime?
+  eliminationOrder Int?      // Order in which this participant was eliminated (e.g., 1, 2...)
+  
+  @@unique([spinWheelId, userId])
+}
+
+model CoinTransaction {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spinWheelId  String?
+  spinWheel    SpinWheel? @relation(fields: [spinWheelId], references: [id], onDelete: SetNull)
+  amount       Float      // Positive for credits, negative for debits
+  type         String     // "INITIAL_CREDIT", "ENTRY_FEE", "REFUND", "WIN_PAYOUT", "ADMIN_PAYOUT", "ADMIN_ADJUSTMENT"
+  description  String?
+  createdAt    DateTime   @default(now())
+}
+
+model GameConfig {
+  key          String     @id
+  value        String
+  description  String?
+}
