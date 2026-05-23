@@ -8,7 +8,7 @@ export async function GET() {
     const configs = await prisma.gameConfig.findMany();
     
     // Map configs to a key-value object
-    const configMap = configs.reduce((acc: any, config) => {
+    const configMap = configs.reduce((acc: any, config: typeof configs[0]) => {
       acc[config.key] = config.value;
       return acc;
     }, {});
